@@ -2,7 +2,7 @@
 
 > 이 문서 하나만 읽으면 프로젝트를 이어서 개발할 수 있게 작성했습니다.
 > Claude Code, Kiro, Codex 등 어떤 에이전트든 **작업 전에 이 문서를 먼저 읽고**, 작업 후 바뀐 내용을 이 문서에 반영하세요.
-> 최종 갱신: 2026-11-25 (Sprint 1 진행 중 — 코드 완료, AWS 배포 전)
+> 최종 갱신: 2026-11-25 (Sprint 1 진행 중 — AWS 시드니 배포 완료)
 
 ---
 
@@ -89,17 +89,20 @@ Sprint Planning 양식 항목: 팀과 시간(각자 작업 가능 시간) → �
 - SAM 템플릿(`template.yaml`, cfn-lint 통과), 콘솔 배포 가이드, API 명세서
 - GitHub 공개 리포 생성
 
+- **AWS 배포 완료 (11-25, 콘솔 B 방식, 시드니 `ap-southeast-2`)** — 배포 주소 **https://main.d2byt69swcwe5a.amplifyapp.com** (Amplify가 GitHub `main`에 연결돼 push마다 자동 배포). 리소스 목록은 `docs/DEPLOY.md` 맨 위 표
+- `frontend/config.js`에 실제 HTTP/WS 주소 입력·커밋
+
 ### ⏳ 남은 일 — Sprint 1 (마감 11/30 00:00)
-- [ ] **AWS 배포** (docs/DEPLOY.md A 또는 B → C). AWS 계정 로그인·결제 확인은 사람이 직접
-- [ ] `frontend/config.js`에 실제 HTTP/WS 주소 입력 후 커밋
-- [ ] 배포 주소에서 DEPLOY.md D 체크리스트 전부 확인 (두 브라우저 실시간 채팅 포함)
+- [ ] DEPLOY.md D 체크리스트 중 사람이 직접 확인할 항목: 다른 브라우저(시크릿 창)에서 링크 열기, ChatGPT/Claude에 붙여넣어 맥락 확인
+- [ ] (권장) Lambda 실행 역할을 자동 생성된 `PowerUserRole`(PowerUserAccess)에서 DynamoDB·ManageConnections만 허용하는 최소 권한 역할로 교체 — 콘솔 IAM JSON 편집기가 자동 입력을 받지 않아 인라인 정책을 못 넣었음
+- [ ] (선택) Lambda 환경 변수 `ALLOW_ORIGIN`을 배포 주소로 좁히기
 - [ ] 팀 Notion: 각자 작업 가능 시간, 작업별 담당자, GitHub 주소, 배포 주소, AWS 플랜/크레딧 채우기
 - [ ] 팀 Notion: "6. 일요일 결과 기록" 작성 (팀원별 기여 포함)
 - [ ] 슬랙 팀 등록 — 사람이 직접 (에이전트가 대신 올리지 말 것)
 - [ ] 노션: "랍스터" 워크스페이스에 김가윤 초대(편집 권한), 구버전 사본 정리 여부 결정
 - [ ] 서비스 이름 확정
 - [ ] 제출 채널·형식 공지 확인 (`#5-과제제출`)
-- [ ] (권장) GitHub에 김가윤 collaborator 초대, Amplify를 GitHub `main`에 연결해 자동 배포
+- [ ] (권장) GitHub에 김가윤 collaborator 초대
 
 ---
 
@@ -209,3 +212,5 @@ sam build && sam deploy   # 백엔드 배포 (docs/DEPLOY.md)
 | 11-25 | Lambda 1개·단일 파일, 프론트 빌드 없음 | 콘솔 배포 쉬움, 2인 4일 일정 |
 | 11-25 | 런타임 Node.js 24.x | Lambda Node 20 지원 종료(2026-04) |
 | 11-25 | GitHub 리포 `lobster` 공개 | 사용자 선택 |
+| 11-25 | 리전을 서울 → **시드니 `ap-southeast-2`** 로 변경 | AWS 무료 플랜 프로젝트가 시드니에 할당되고 다른 리전은 플랜 업그레이드가 필요. 유료 전환 금지 규칙 때문에 시드니 사용 |
+| 11-25 | 배포는 콘솔(B) + Amplify GitHub 연결 | 사용자 지시 |

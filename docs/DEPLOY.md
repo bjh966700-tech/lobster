@@ -1,6 +1,16 @@
 # AWS 배포 가이드 (Sprint 1 + 실시간 채팅)
 
-> 리전은 **서울 `ap-northeast-2`** 하나로 통일합니다.
+> **실제 배포 현황 (2026-11-25, 콘솔 B 방식)** — 무료 플랜 프로젝트는 **시드니 `ap-southeast-2`** 에만 할당돼 서울을 쓸 수 없어(플랜 업그레이드 필요) 시드니에 배포했습니다. 아래 절차의 `ap-northeast-2`는 `ap-southeast-2`로 바꿔 읽으세요.
+>
+> | 리소스 | 이름 / 주소 |
+> |---|---|
+> | DynamoDB | `lobster-cards`, `lobster-messages`, `lobster-connections`(GSI `byCard`, TTL `ttl`) — 온디맨드 |
+> | Lambda | `lobster-api` (Node.js 24.x). 실행 역할은 콘솔이 자동 생성한 `PowerUserRole`(AWS 관리형 PowerUserAccess) — 권한이 넓으니 나중에 최소 권한 역할로 교체 권장 |
+> | HTTP API | `lobster-http` → `https://d53kr4pr9d.execute-api.ap-southeast-2.amazonaws.com` |
+> | WebSocket API | `lobster-chat` → `wss://tau0dq4z3l.execute-api.ap-southeast-2.amazonaws.com/production` |
+> | Amplify | 앱 `lobster` (`d2byt69swcwe5a`), GitHub `main` 연결, 출력 디렉터리 `frontend` → `https://main.d2byt69swcwe5a.amplifyapp.com` |
+>
+> 무료 플랜 프로젝트 기준 리전(시드니)을 확인하고 그 리전으로 통일하세요. (원래 계획은 서울 `ap-northeast-2`)
 > 시작 전에 Billing 콘솔에서 Free plan 여부, 남은 크레딧, 만료일을 확인하세요. 무료로 안 되면 **교수님께 알리고 유료로 바꾸지 마세요.**
 > 비밀번호·액세스 키·인증 코드는 팀원과 공유하거나 Git/Notion에 적지 않습니다.
 
