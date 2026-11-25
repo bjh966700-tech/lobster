@@ -1,16 +1,29 @@
 # 🏃 바톤 API 명세서
 
-> 버전: v0.2 (Sprint 1 + 실시간 팀 채팅) · 최종 수정: 2026-11-25
+> 버전: v0.3 (Sprint 1 배포본) · 최종 수정: 2026-11-25 · 배포 리전: 시드니 `ap-southeast-2`
 > 구현: `backend/index.mjs` (Lambda 1개가 HTTP와 WebSocket을 모두 처리)
 > 자동 시험: `npm test` (`tests/smoke.test.mjs`)
 
 ## 0. 개요
 
-| 구분 | AWS 서비스 | 기본 주소 (배포 후 확정) | 프론트 설정 |
+| 구분 | AWS 서비스 | 기본 주소 | 프론트 설정 |
 |---|---|---|---|
-| HTTP API | API Gateway **HTTP API** | `https://{httpApiId}.execute-api.ap-northeast-2.amazonaws.com` | `window.LOBSTER_API_URL` |
-| WebSocket API | API Gateway **WebSocket API** | `wss://{wsApiId}.execute-api.ap-northeast-2.amazonaws.com/production` | `window.LOBSTER_WS_URL` |
+| HTTP API | API Gateway **HTTP API** (`lobster-http`) | `https://d53kr4pr9d.execute-api.ap-southeast-2.amazonaws.com` | `window.LOBSTER_API_URL` |
+| WebSocket API | API Gateway **WebSocket API** (`lobster-chat`) | `wss://tau0dq4z3l.execute-api.ap-southeast-2.amazonaws.com/production` | `window.LOBSTER_WS_URL` |
 | 로컬 시험 | `local/server.mjs` | HTTP `http://localhost:3000/api` · WS `ws://localhost:3000/ws` | 자동 주입 |
+
+화면(프론트) 주소: `https://main.d2byt69swcwe5a.amplifyapp.com` · 공유 링크 = 화면 주소 + `/?id={카드ID}`
+
+### 한눈에 보기
+| 종류 | 메서드 / 이벤트 | 경로 | 설명 | 성공 |
+|---|---|---|---|---|
+| HTTP | `POST` | `/cards` | 카드 만들기 | `201 { id }` |
+| HTTP | `GET` | `/cards/{id}` | 카드 보기 | `200 Card` |
+| HTTP | `GET` | `/cards/{id}/messages` | 채팅 기록(최근 100개) | `200 { messages }` |
+| WS | 연결 | `?cardId=&name=` | 카드 채팅방 입장 | 연결 |
+| WS | 보내기 | `{"type":"hello"}` | 접속자 목록 요청 | `presence` 수신 |
+| WS | 보내기 | `{"type":"message","text","clientId"}` | 메시지 보내기 | `message` 수신(전원) |
+| WS | 보내기 | `{"type":"ping"}` | 연결 유지 | 응답 없음 |
 
 공통 규칙
 - 요청·응답 본문은 **JSON (UTF-8)**.
@@ -79,19 +92,20 @@
 |---|---|---|
 | `201` | `{ "id": "yiauqUGbJP" }` | 성공 |
 | `400` | `{ "error": "JSON 형식이 올바르지 않습니다." }` | 본문이 JSON이 아님 |
-| `400` | `{ "error": "프롬프트을 입력해 주세요." }` / `"AI 답변을 입력해 주세요."` | 필수 값 누락 |
+| `400` | `{ "error": "프롬프트을 입력해 주세요." }` / `"AI 답변을 입력해 주세요."` | 필수 값 누락 (※ "프롬프트을"은 조사 오류 — 알려진 문제, 화면은 자체 검사로 "프롬프트를"을 먼저 보여 줌) |
 | `400` | `{ "error": "메모은(는) 2,000자 이하로 입력해 주세요." }` | 길이 초과 |
 | `400` | `{ "error": "작성자 값이 올바르지 않습니다." }` | 문자열이 아닌 값 |
 | `500` | `{ "error": "서버 오류가 발생했습니다. ..." }` | 서버 오류 (CloudWatch 로그 확인) |
 
-공유 링크 = 프론트 주소 + `?id={id}` (예: `https://main.xxxx.amplifyapp.com/?id=yiauqUGbJP`)
+공유 링크 = 프론트 주소 + `?id={id}` (예: `https://main.d2byt69swcwe5a.amplifyapp.com/?id=yiauqUGbJP`)
 
 ### 2.2 `GET /cards/{id}` — 카드 보기
 
 | 상태 | 본문 |
 |---|---|
 | `200` | Card 객체 전체 |
-| `404` | `{ "error": "카드를 찾을 수 없습니다. 링크를 다시 확인해 주세요." }` (ID 형식이 틀려도 404) |
+| `404` | `{ "error": "카드를 찾을 수 없습니다. 링크를 다시 확인해 주세요." }` — ID 형식은 맞지만 카드가 없음 |
+| `404` | `{ "error": "지원하지 않는 요청입니다." }` — ID 형식이 틀림 (예: `/cards/nope`). 화면은 이 문구를 그대로 보여 줌 |
 
 ### 2.3 `GET /cards/{id}/messages` — 채팅 기록
 
@@ -101,9 +115,28 @@
 |---|---|
 | `200` | `{ "messages": [Message, ...] }` |
 | `404` | `{ "error": "카드를 찾을 수 없습니다." }` |
+| `404` | `{ "error": "지원하지 않는 요청입니다." }` — ID 형식이 틀림 |
 
 ### 2.4 `OPTIONS *`
-CORS 사전 요청. `204`.
+CORS 사전 요청. 배포본에서는 API Gateway의 CORS 설정이 직접 `204`로 응답합니다 (Lambda까지 오지 않음).
+
+### 2.5 등록되지 않은 경로
+API Gateway에 라우트가 없는 경로(예: `GET /hello`)는 Lambda까지 오지 않고 API Gateway가 `404 { "message": "Not Found" }`로 응답합니다. 형식이 `error`가 아니라 `message`인 점에 주의.
+
+### 2.6 호출 예 (curl)
+```bash
+API=https://d53kr4pr9d.execute-api.ap-southeast-2.amazonaws.com
+
+# 카드 만들기 → {"id":"..."}
+curl -X POST "$API/cards" -H "Content-Type: application/json" \
+  -d '{"prompt":"테스트 질문","answer":"테스트 답변","aiTool":"Claude","author":"재엽"}'
+
+# 카드 보기
+curl "$API/cards/{id}"
+
+# 채팅 기록
+curl "$API/cards/{id}/messages"
+```
 
 ---
 
@@ -113,7 +146,7 @@ API Gateway WebSocket의 라우트 3개를 같은 Lambda로 연결합니다. 라
 
 ### 3.1 연결 (`$connect`)
 ```
-wss://{wsApiId}.execute-api.ap-northeast-2.amazonaws.com/production?cardId={카드ID}&name={URL 인코딩한 이름}
+wss://tau0dq4z3l.execute-api.ap-southeast-2.amazonaws.com/production?cardId={카드ID}&name={URL 인코딩한 이름}
 ```
 | 결과 | 상황 |
 |---|---|
@@ -144,7 +177,16 @@ wss://{wsApiId}.execute-api.ap-northeast-2.amazonaws.com/production?cardId={카�
 ### 3.4 연결 종료 (`$disconnect`)
 Connection 삭제 → 남은 접속자에게 `presence` 전송.
 
-### 3.5 프론트 재연결 규칙 (`frontend/app.js`)
+### 3.5 호출 예 (wscat)
+```bash
+npx wscat -c "wss://tau0dq4z3l.execute-api.ap-southeast-2.amazonaws.com/production?cardId={카드ID}&name=test"
+> {"type":"hello"}
+< {"type":"presence","online":1,"names":["test"]}
+> {"type":"message","text":"안녕","clientId":"cli1"}
+< {"type":"message","message":{...}}
+```
+
+### 3.6 프론트 재연결 규칙 (`frontend/app.js`)
 - 끊기면 1s → 2s → 4s … 최대 30s 간격으로 다시 연결.
 - 다시 연결되면 `GET /cards/{id}/messages`로 놓친 메시지를 채우고, 메시지 `id`로 중복 표시를 막습니다.
 - 한글 입력 조합 중 Enter(`isComposing`/`keyCode 229`)는 전송하지 않습니다.
@@ -158,9 +200,9 @@ Connection 삭제 → 남은 접속자에게 `presence` 전송.
 | `CARDS_TABLE` | `lobster-cards` | 카드 테이블 (예전 이름 `TABLE_NAME`도 인식) |
 | `MESSAGES_TABLE` | `lobster-messages` | 메시지 테이블 |
 | `CONNECTIONS_TABLE` | `lobster-connections` | 접속 테이블 (GSI `byCard` 필수) |
-| `ALLOW_ORIGIN` | `https://main.xxxx.amplifyapp.com` | (선택) CORS 허용 주소. 기본 `*` |
+| `ALLOW_ORIGIN` | `https://main.d2byt69swcwe5a.amplifyapp.com` | (선택) CORS 허용 주소. 기본 `*` (현재 배포본은 미설정) |
 
-Lambda 실행 역할에 필요한 권한: 세 테이블의 `PutItem/GetItem/DeleteItem/Query`(GSI 포함), `execute-api:ManageConnections`.
+Lambda 실행 역할에 필요한 권한: 세 테이블의 `PutItem/GetItem/DeleteItem/Query`(GSI 포함), `execute-api:ManageConnections`. (현재 배포본은 자동 생성된 `PowerUserRole`을 쓰고 있어 이보다 넓음 → Sprint 2에 최소 권한으로 교체 예정)
 
 ---
 
@@ -169,6 +211,7 @@ Lambda 실행 역할에 필요한 권한: 세 테이블의 `PutItem/GetItem/Dele
 |---|---|---|
 | v0.1 | 2026-11-25 | 카드 생성·조회 |
 | v0.2 | 2026-11-25 | 실시간 팀 채팅(WebSocket), 채팅 기록 API, Lambda 단일 파일(`index.mjs`)로 통합, 런타임 Node.js 24.x |
+| v0.3 | 2026-11-25 | 시드니 배포 주소 반영, 한눈에 보기 표·호출 예 추가, 배포본에서 실제 확인한 응답(ID 형식 오류, 미등록 경로, CORS) 명시 |
 
 ## 6. 다음 버전에서 바뀔 수 있는 부분 (예정)
 - 로그인 도입 시 `Authorization` 헤더와 작성자·권한 필드 추가

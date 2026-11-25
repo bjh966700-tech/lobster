@@ -94,6 +94,7 @@ Sprint Planning 양식 항목: 팀과 시간(각자 작업 가능 시간) → �
 - **AWS 배포 완료 (11-25, 콘솔 B 방식, 시드니 `ap-southeast-2`)** — 배포 주소 **https://main.d2byt69swcwe5a.amplifyapp.com** (Amplify가 GitHub `main`에 연결돼 push마다 자동 배포). 리소스 목록은 `docs/DEPLOY.md` 맨 위 표
 - `frontend/config.js`에 실제 HTTP/WS 주소 입력·커밋
 - 서비스 이름 **바톤** 확정·화면/문서 반영 (11-25)
+- API 명세서 v0.3 (`docs/API.md`): 실제 배포 주소, 한눈에 보기 표, curl/wscat 호출 예, 배포본에서 확인한 응답 반영 (11-25)
 - 팀 Notion 기록 갱신 (11-25): 서비스 이름, GitHub·배포 주소, AWS 플랜/크레딧/리전, 완료 기준 체크, 일요일 결과 기록, 팀원별 기여
   - 김가윤: 서비스 아이디어 구상(채팅 형식, 벤치마킹, 유사 서비스 탐색)·구체화, 풀스택 프로그래밍(AI 활용), 프로토타입 시연
   - 변재엽: 서비스 아이디어 구상(AI 내용 공유 플랫폼)·구체화, 풀스택 프로그래밍(AI 활용), AWS 서버 배포
@@ -111,6 +112,8 @@ Sprint Planning 양식 항목: 팀과 시간(각자 작업 가능 시간) → �
 ### ⏭️ 미룬 일 (Sprint 2에서)
 - Lambda 실행 역할을 자동 생성된 `PowerUserRole`(PowerUserAccess)에서 DynamoDB·ManageConnections만 허용하는 최소 권한 역할로 교체 — 콘솔 IAM JSON 편집기가 자동 입력을 받지 않아 인라인 정책을 못 넣었음 (사용자가 다음에 하기로 함)
 - (선택) Lambda 환경 변수 `ALLOW_ORIGIN`을 배포 주소로 좁히기
+- 서버 오류 문구 조사 오류 수정: 필수값 누락 시 "프롬프트**을** 입력해 주세요." → "프롬프트**를**" (`backend/index.mjs` `validateCard`). 고친 뒤 Lambda에 코드 다시 올려야 반영됨
+- ID 형식이 틀린 링크(`?id=nope`)에서 "지원하지 않는 요청입니다." 대신 "카드를 찾을 수 없습니다" 안내가 나오게 하기
 
 ---
 
