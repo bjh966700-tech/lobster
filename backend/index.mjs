@@ -1,4 +1,4 @@
-// 🦞 랍스터 백엔드 — Lambda 함수 하나로 HTTP API와 WebSocket(실시간 채팅)을 모두 처리합니다.
+// 🏃 바톤 백엔드 — Lambda 함수 하나로 HTTP API와 WebSocket(실시간 채팅)을 모두 처리합니다.
 // 런타임: Node.js 24.x (AWS SDK v3는 Lambda에 기본 포함)
 //
 // HTTP API (API Gateway HTTP API)

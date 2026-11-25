@@ -2,7 +2,7 @@
   "name": "lobster",
   "version": "0.2.0",
   "private": true,
-  "description": "🦞 랍스터 — AI 대화를 맥락째로 공유하고 팀원과 실시간으로 이야기하는 팀플 협업 플랫폼",
+  "description": "🏃 바톤 — AI 대화를 맥락째로 공유하고 팀원과 실시간으로 이야기하는 팀플 협업 플랫폼",
   "type": "module",
   "scripts": {
     "dev": "node local/server.mjs",

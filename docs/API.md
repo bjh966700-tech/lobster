@@ -1,4 +1,4 @@
-# 🦞 랍스터 API 명세서
+# 🏃 바톤 API 명세서
 
 > 버전: v0.2 (Sprint 1 + 실시간 팀 채팅) · 최종 수정: 2026-11-25
 > 구현: `backend/index.mjs` (Lambda 1개가 HTTP와 WebSocket을 모두 처리)

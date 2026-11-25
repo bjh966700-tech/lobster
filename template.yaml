@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  랍스터 백엔드 — HTTP API(카드·채팅 기록) + WebSocket API(실시간 팀 채팅)
+  바톤 백엔드 — HTTP API(카드·채팅 기록) + WebSocket API(실시간 팀 채팅)
   + Lambda 1개 + DynamoDB 3개. 배포: sam build && sam deploy --guided
 
 Parameters:

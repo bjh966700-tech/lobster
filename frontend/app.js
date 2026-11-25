@@ -1,4 +1,4 @@
-// 랍스터 프론트엔드 (Sprint 1)
+// 바톤 프론트엔드 (Sprint 1)
 // - ?id= 가 없으면 카드 작성 화면, 있으면 카드 보기 화면
 (() => {
   const API = (window.LOBSTER_API_URL || "").replace(/\/+$/, "");
@@ -157,7 +157,7 @@
       return;
     }
 
-    document.title = `${card.title} — 랍스터`;
+    document.title = `${card.title} — 바톤`;
     $("c-title").textContent = card.title;
     $("c-ai").textContent = card.aiTool || "AI";
     $("c-author").textContent = card.author ? `${card.author} 님이 공유` : "";

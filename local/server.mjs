@@ -93,4 +93,4 @@ server.on("upgrade", async (req, socket, head) => {
   });
 });
 
-server.listen(PORT, () => console.log(`🦞 http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`🏃 http://localhost:${PORT}`));
