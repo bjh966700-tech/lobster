@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: 랍스터 Sprint 1 — AI 대화 공유 카드 API (API Gateway + Lambda + DynamoDB)
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 10
+    MemorySize: 256
+
+Resources:
+  CardsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  CardsApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: ["*"]
+        AllowMethods: [GET, POST, OPTIONS]
+        AllowHeaders: [Content-Type]
+
+  CardsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/
+      Handler: handler.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref CardsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CardsTable
+      Events:
+        CreateCard:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CardsApi
+            Path: /cards
+            Method: POST
+        GetCard:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CardsApi
+            Path: /cards/{id}
+            Method: GET
+
+Outputs:
+  ApiUrl:
+    Description: frontend/config.js 의 LOBSTER_API_URL 에 넣을 주소
+    Value: !Sub "https://${CardsApi}.execute-api.${AWS::Region}.amazonaws.com"
