@@ -1,5 +1,5 @@
-// 배포 후 API Gateway 주소로 바꿔 주세요. (끝에 / 없이)
-// HTTP API 호출 URL   예: "https://abc123.execute-api.ap-northeast-2.amazonaws.com"
-window.LOBSTER_API_URL = "https://YOUR-HTTP-API-ID.execute-api.ap-northeast-2.amazonaws.com";
-// WebSocket API URL   예: "wss://xyz789.execute-api.ap-northeast-2.amazonaws.com/production"
-window.LOBSTER_WS_URL = "wss://YOUR-WS-API-ID.execute-api.ap-northeast-2.amazonaws.com/production";
+// 배포된 API Gateway 주소 (끝에 / 없이). 리전: 시드니 ap-southeast-2 (무료 플랜 프로젝트 할당 리전)
+// HTTP API 호출 URL
+window.LOBSTER_API_URL = "https://d53kr4pr9d.execute-api.ap-southeast-2.amazonaws.com";
+// WebSocket API URL
+window.LOBSTER_WS_URL = "wss://tau0dq4z3l.execute-api.ap-southeast-2.amazonaws.com/production";
