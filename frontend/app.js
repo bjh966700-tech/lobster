@@ -169,7 +169,8 @@
     renderMarkdown($("c-prompt"), card.prompt);
     renderMarkdown($("c-answer"), card.answer);
     $("card-loading").hidden = true;
-    $("card").hidden = false;
+    $("card-layout").hidden = false;
+    initChat(card);
 
     const msg = $("handoff-msg");
     const text = () => buildAiText(card, $("followup").value);
@@ -198,6 +199,161 @@
     $("copy-link2").addEventListener("click", async () => {
       toast((await copyText(cardUrl(card.id))) ? "카드 링크를 복사했어요" : "복사에 실패했어요");
     });
+  }
+
+  // ---------- 실시간 팀 채팅 ----------
+  // 브라우저 저장소는 막혀 있을 수 있으므로 항상 try/catch
+  const storage = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch { /* 무시 */ } },
+  };
+  function clientId() {
+    try {
+      let id = sessionStorage.getItem("lobster-client");
+      if (!id) { id = Math.random().toString(36).slice(2, 12); sessionStorage.setItem("lobster-client", id); }
+      return id;
+    } catch {
+      return (clientId._id ||= Math.random().toString(36).slice(2, 12));
+    }
+  }
+
+  function initChat(card) {
+    const WS = (window.LOBSTER_WS_URL || "").replace(/\/+$/, "");
+    const me = clientId();
+    const seen = new Set();
+    const list = $("chat-list");
+    const input = $("chat-input");
+    let ws = null;
+    let name = storage.get("lobster-name") || "";
+    let retry = 0;
+    let pingTimer = null;
+    let closedByUser = false;
+
+    function setStatus(kind, text) {
+      const el = $("chat-status");
+      el.className = "status " + kind;
+      el.querySelector("span").textContent = text;
+    }
+
+    function fmtTime(iso) {
+      return new Date(iso).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function addMessage(m) {
+      if (seen.has(m.id)) return;
+      seen.add(m.id);
+      $("chat-empty").hidden = true;
+      const li = document.createElement("li");
+      li.className = "msg" + (m.clientId === me ? " mine" : "");
+      const who = document.createElement("div");
+      who.className = "who";
+      who.textContent = m.name;
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = m.text; // 텍스트로만 넣어서 스크립트 삽입 방지
+      const time = document.createElement("div");
+      time.className = "time";
+      time.textContent = fmtTime(m.createdAt);
+      li.append(who, bubble, time);
+
+      const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 80;
+      list.appendChild(li);
+      if (nearBottom || m.clientId === me) list.scrollTop = list.scrollHeight;
+    }
+
+    async function loadHistory() {
+      try {
+        const { messages } = await api(`/cards/${encodeURIComponent(card.id)}/messages`);
+        messages.forEach(addMessage);
+        list.scrollTop = list.scrollHeight;
+      } catch (ex) {
+        console.warn("채팅 기록을 불러오지 못했어요", ex);
+      }
+    }
+
+    function connect() {
+      if (!WS || WS.includes("YOUR-WS-API-ID")) {
+        setStatus("", "채팅 서버 주소 미설정");
+        $("chat-online").textContent = "config.js의 LOBSTER_WS_URL을 설정해 주세요.";
+        return;
+      }
+      setStatus("wait", retry ? "다시 연결 중…" : "연결 중…");
+      ws = new WebSocket(`${WS}?cardId=${encodeURIComponent(card.id)}&name=${encodeURIComponent(name)}`);
+
+      ws.onopen = () => {
+        const wasRetry = retry > 0;
+        retry = 0;
+        setStatus("on", "실시간 연결됨");
+        ws.send(JSON.stringify({ type: "hello" }));
+        if (wasRetry) loadHistory(); // 끊긴 동안 놓친 메시지 채우기
+        clearInterval(pingTimer);
+        // API Gateway는 10분간 조용하면 연결을 끊으므로 5분마다 신호
+        pingTimer = setInterval(() => ws.readyState === 1 && ws.send(JSON.stringify({ type: "ping" })), 5 * 60 * 1000);
+      };
+      ws.onmessage = (e) => {
+        let data;
+        try { data = JSON.parse(e.data); } catch { return; }
+        if (data.type === "message") addMessage(data.message);
+        else if (data.type === "presence") {
+          $("chat-online").textContent = `지금 ${data.online}명 접속 중 · ${data.names.join(", ")}`;
+        } else if (data.type === "error") toast(data.error);
+      };
+      ws.onclose = () => {
+        clearInterval(pingTimer);
+        if (closedByUser) return;
+        retry++;
+        const wait = Math.min(30000, 1000 * 2 ** Math.min(retry, 5));
+        setStatus("wait", `연결 끊김 · ${Math.round(wait / 1000)}초 후 재시도`);
+        setTimeout(connect, wait);
+      };
+    }
+
+    function join(newName) {
+      name = newName.trim().slice(0, 20);
+      storage.set("lobster-name", name);
+      $("chat-join").hidden = true;
+      $("chat-form").hidden = false;
+      $("chat-rename").hidden = false;
+      if (ws) { closedByUser = true; ws.close(); }
+      closedByUser = false;
+      retry = 0;
+      connect();
+      input.focus();
+    }
+
+    function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+      if (!ws || ws.readyState !== 1) return toast("아직 연결되지 않았어요. 잠시 후 다시 보내 주세요");
+      ws.send(JSON.stringify({ type: "message", text, clientId: me }));
+      input.value = "";
+    }
+
+    $("chat-join").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const v = $("chat-name").value.trim();
+      if (!v) return $("chat-name").focus();
+      join(v);
+    });
+    $("chat-form").addEventListener("submit", (e) => { e.preventDefault(); sendMessage(); });
+    input.addEventListener("keydown", (e) => {
+      // 한글 입력 중(조합 중) Enter는 무시해야 마지막 글자가 두 번 가지 않음
+      if (e.key === "Enter" && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    $("chat-rename").addEventListener("click", () => {
+      $("chat-name").value = name;
+      $("chat-form").hidden = true;
+      $("chat-rename").hidden = true;
+      $("chat-join").hidden = false;
+      $("chat-name").focus();
+    });
+
+    loadHistory();
+    if (name) join(name);
+    else $("chat-name").focus({ preventScroll: true });
   }
 
   // ---------- 시작 ----------

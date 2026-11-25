@@ -74,7 +74,8 @@
       <p id="card-loading" class="muted">카드를 불러오는 중…</p>
       <p id="card-error" class="error" hidden></p>
 
-      <article id="card" hidden>
+      <div id="card-layout" class="card-layout" hidden>
+      <article id="card">
         <div class="meta">
           <span id="c-ai" class="badge"></span>
           <span id="c-author"></span>
@@ -111,6 +112,33 @@
           <p id="handoff-msg" class="note" hidden></p>
         </div>
       </article>
+
+      <!-- 실시간 팀 채팅 -->
+      <aside id="chat" class="chat" aria-label="팀 채팅">
+        <div class="chat-head">
+          <strong>💬 팀 채팅</strong>
+          <span id="chat-status" class="status"><i class="dot"></i><span>연결 전</span></span>
+        </div>
+        <p id="chat-online" class="online muted"></p>
+
+        <div id="chat-room" class="chat-room">
+          <ol id="chat-list" class="chat-list" aria-live="polite"></ol>
+          <p id="chat-empty" class="muted chat-empty">아직 메시지가 없어요. 첫 마디를 남겨 보세요!</p>
+          <form id="chat-join" class="chat-join">
+            <p>이름을 입력하면 팀원과 실시간으로 이야기할 수 있어요.</p>
+            <label>내 이름
+              <input id="chat-name" maxlength="20" placeholder="예: 재엽" autocomplete="nickname" />
+            </label>
+            <button type="submit" class="primary">채팅 입장</button>
+          </form>
+          <form id="chat-form" class="chat-form" hidden>
+            <textarea id="chat-input" rows="2" maxlength="2000" placeholder="메시지 입력 (Enter 보내기, Shift+Enter 줄바꿈)"></textarea>
+            <button type="submit" id="chat-send" class="primary">보내기</button>
+          </form>
+          <button id="chat-rename" class="link-btn" type="button" hidden>이름 바꾸기</button>
+        </div>
+      </aside>
+      </div>
     </section>
   </main>
 
